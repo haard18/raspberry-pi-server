@@ -45,6 +45,7 @@ export class GPTService {
         throw new Error('No response received from OpenAI');
       }
       console.log(assistantMessage);
+      return assistantMessage;
     } catch (error) {
       console.error('Error calling OpenAI API:', error);
       
