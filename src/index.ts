@@ -15,27 +15,26 @@ interface GPTRequestBody {
 // Routes
 app.post("/", (req: Request, res: Response) => {
     console.log(req);
-            const { text } = req.body;
+    const { text } = req.body;
 
-        // Validate text content
-        if (typeof text !== 'string' || text.trim().length === 0) {
-            return res.status(400).json({ 
-                error: "Bad Request", 
-                message: "Text must be a non-empty string" 
-            });
-        }
-
-        // Get response from Pluto (GPT blockchain helper)
-        const plutoResponse = gptService.getResponse(text);
-
-        // Return the response
-        res.json({
-            success: true,
-            user_input: text,
-            pluto_response: plutoResponse,
-            timestamp: new Date().toISOString()
+    // Validate text content
+    if (typeof text !== 'string' || text.trim().length === 0) {
+        return res.status(400).json({ 
+            error: "Bad Request", 
+            message: "Text must be a non-empty string" 
         });
-    res.send("Hello from Express + TypeScript 🚀");
+    }
+
+    // Get response from Pluto (GPT blockchain helper)
+    const plutoResponse = gptService.getResponse(text);
+
+    // Return the response
+    res.json({
+        success: true,
+        user_input: text,
+        pluto_response: plutoResponse,
+        timestamp: new Date().toISOString()
+    });
 });
 
 app.get('/', (req: Request, res: Response) => {
