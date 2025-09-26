@@ -5,7 +5,9 @@ import say from 'say';
  * @param text - Text to speak
  */
 export function speakText(text: string) {
-    say.speak(text, undefined, 1.0, (err) => {
+    // say.speak(text, voice, speed, callback)
+
+    say.speak(text, 'en-us+f3', 1.5, (err) => {
         if (err) {
             console.error('Error speaking text:', err);
         } else {
