@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@graphprotocol/graph-ts": "^0.38.1",
+    "@substreams/core": "^0.17.0",
     "axios": "^1.12.2",
     "dotenv": "^16.4.5",
     "ethers": "^6.15.0",
