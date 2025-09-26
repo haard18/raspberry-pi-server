@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from "express";
-import { gptService } from "./gpt/service.js";
+import { gptService, type ActionableResponse } from "./gpt/service.js";
 import { PhysicalWalletService } from "./services/physicalWallet.js";
 import { speakText } from "./output/speak.js";
 
@@ -319,7 +319,6 @@ app.get("/wallets", (req: Request, res: Response) => {
 
 // Routes
 app.post("/", async (req: Request, res: Response) => {
-    console.log(req);
     const { text } = req.body;
 
     // Validate text content
@@ -330,16 +329,100 @@ app.post("/", async (req: Request, res: Response) => {
         });
     }
 
-    // Get response from Pluto (GPT blockchain helper)
-    const plutoResponse = await gptService.getResponse(text);
-    speakText(plutoResponse);
-    // Return the response
-    res.json({
-        success: true,
-        user_input: text,
-        pluto_response: plutoResponse,
-        timestamp: new Date().toISOString()
-    });
+    try {
+        // Analyze user intent to see if they want to perform a wallet action
+        const intentAnalysis = await gptService.analyzeUserIntent(text);
+        
+        if (intentAnalysis.isAction && intentAnalysis.action) {
+            // Handle wallet actions
+            switch (intentAnalysis.action) {
+                case 'CREATE_WALLET':
+                    try {
+                        const physicalWallet = await physicalWalletService.generatePhysicalWallet();
+                        
+                        // Speak the action confirmation instead of sending to speaker
+                        speakText(intentAnalysis.textResponse || "Wallet created successfully!");
+                        
+                        return res.json({
+                            success: true,
+                            user_input: text,
+                            action_performed: 'CREATE_WALLET',
+                            pluto_response: intentAnalysis.textResponse,
+                            wallet: {
+                                address: physicalWallet.walletInfo.address,
+                                publicKey: physicalWallet.walletInfo.publicKey,
+                                privateKey: physicalWallet.walletInfo.privateKey,
+                                mnemonic: physicalWallet.walletInfo.mnemonic,
+                                createdAt: physicalWallet.createdAt,
+                                walletData: physicalWallet.walletData
+                            },
+                            timestamp: new Date().toISOString()
+                        });
+                    } catch (error) {
+                        const errorMessage = "Oops! Had some trouble minting your wallet. Let me try that again.";
+                        speakText(errorMessage);
+                        return res.status(500).json({
+                            success: false,
+                            error: "Failed to create wallet",
+                            message: error instanceof Error ? error.message : "Unknown error"
+                        });
+                    }
+                
+                case 'GET_WALLET_INFO':
+                    const wallets = physicalWalletService.getAllWallets();
+                    const walletSummary = `You have ${wallets.length} wallet${wallets.length !== 1 ? 's' : ''} in your portfolio.`;
+                    speakText(walletSummary);
+                    
+                    return res.json({
+                        success: true,
+                        user_input: text,
+                        action_performed: 'GET_WALLET_INFO',
+                        pluto_response: walletSummary,
+                        wallets: wallets.map(wallet => ({
+                            address: wallet.walletInfo.address,
+                            isMonitoring: wallet.isMonitoring,
+                            createdAt: wallet.createdAt,
+                            lastUpdated: wallet.lastUpdated
+                        })),
+                        timestamp: new Date().toISOString()
+                    });
+                
+                default:
+                    // For other actions, provide guidance
+                    const guidanceMessage = intentAnalysis.textResponse || "I understand what you want to do, but I need more information to help you.";
+                    speakText(guidanceMessage);
+                    
+                    return res.json({
+                        success: true,
+                        user_input: text,
+                        action_detected: intentAnalysis.action,
+                        pluto_response: guidanceMessage,
+                        timestamp: new Date().toISOString()
+                    });
+            }
+        } else {
+            // Normal GPT response for general conversation
+            const plutoResponse = intentAnalysis.textResponse || await gptService.getResponse(text);
+            speakText(plutoResponse);
+            
+            return res.json({
+                success: true,
+                user_input: text,
+                pluto_response: plutoResponse,
+                timestamp: new Date().toISOString()
+            });
+        }
+    } catch (error) {
+        console.error("Error processing request:", error);
+        const errorMessage = "Sorry, I'm having some network issues. Please try again.";
+        speakText(errorMessage);
+        
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error",
+            message: error instanceof Error ? error.message : "Unknown error"
+        });
+    }
 });
 
 app.get('/', (req: Request, res: Response) => {

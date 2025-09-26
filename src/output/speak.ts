@@ -5,9 +5,10 @@ import say from 'say';
  * @param text - Text to speak
  */
 export function speakText(text: string) {
-    // say.speak(text, voice, speed, callback)
-
-    say.speak(text, 'en-us+f3', 1.5, (err) => {
+    // Use default voice (null) which is more compatible across systems
+    // Alternative: you can try 'Alex', 'Samantha', or other system voices
+    
+    say.speak(text, undefined, 1.0, (err) => {
         if (err) {
             console.error('Error speaking text:', err);
         } else {
