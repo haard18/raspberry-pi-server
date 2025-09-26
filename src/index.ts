@@ -1,5 +1,6 @@
 import express, { type Request, type Response } from "express";
 import { gptService } from "./gpt/service.js";
+import { speakText } from "./output/speak.js";
 
 const app = express();
 const port = 3000;
@@ -13,7 +14,7 @@ interface GPTRequestBody {
 }
 
 // Routes
-app.post("/", (req: Request, res: Response) => {
+app.post("/", async (req: Request, res: Response) => {
     console.log(req);
     const { text } = req.body;
 
@@ -26,8 +27,8 @@ app.post("/", (req: Request, res: Response) => {
     }
 
     // Get response from Pluto (GPT blockchain helper)
-    const plutoResponse = gptService.getResponse(text);
-
+    const plutoResponse = await gptService.getResponse(text);
+    speakText(plutoResponse);
     // Return the response
     res.json({
         success: true,
