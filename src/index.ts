@@ -319,7 +319,6 @@ app.get("/wallets", (req: Request, res: Response) => {
 
 // Routes
 app.post("/", async (req: Request, res: Response) => {
-    console.log(req);
     const { text } = req.body;
 
     // Validate text content
