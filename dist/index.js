@@ -4,8 +4,12 @@ const port = 3000;
 // Middleware to parse JSON
 app.use(express.json());
 // Routes
-app.get("/", (req, res) => {
+app.post("/", (req, res) => {
+    console.log(req);
     res.send("Hello from Express + TypeScript 🚀");
+});
+app.get('/', (req, res) => {
+    res.send('GET request to the homepage');
 });
 app.post("/echo", (req, res) => {
     res.json({ youSent: req.body });
